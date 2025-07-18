@@ -52,32 +52,20 @@ def extract_spectrogram_image(y, sr):
 
 def load_dataset():
     X, y = [], []
-    for label_dir in os.listdir(DATA_DIR):
-       label_path = os.path.join(DATA_DIR, label_dir)
-       if not os.path.isdir(label_path):
+    for label_folder in os.listdir(DATA_DIR):
+        class_path = os.path.join(DATA_DIR, label_folder)
+        if not os.path.isdir(class_path):
             continue
-       if "bebop_1" in label_dir:
-            actual_label = "bebop_1"
-       elif "membo_1" in label_dir:
-            actual_label = "membo_1"
-       elif "unknown" in label_dir:
-            actual_label = "unknown"
-       else:
-        print(f"❌ Skipping unrecognized folder: {label_dir}")
-        continue
-
-    print(f"📁 Loading 300 samples of '{label_dir}' (as '{actual_label}')")
-    files = glob(os.path.join(label_path, "*.wav"))[:300]
-
-    for f in files:
-        try:
-            y_audio, sr = preprocess_audio(f)
-            img = extract_spectrogram_image(y_audio, sr)
-            X.append(img)
-            y.append(actual_label)
-        except Exception as e:
-            print(f"⚠️ Error loading {f}: {e}")
-
+        print(f"Loading 300 samples of '{label_folder}'")
+        wav_files = glob(os.path.join(class_path, '*.wav'))[:300]
+        for f in wav_files:
+            try:
+                y_audio, sr = preprocess_audio(f)
+                img = extract_spectrogram_image(y_audio, sr)
+                X.append(img)
+                y.append(label_folder)
+            except Exception as e:
+                print(f"⚠️ Error loading {f}: {e}")
     print(f"✅ Total loaded samples: {len(X)}")
     return np.array(X), np.array(y)
 
