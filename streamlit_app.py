@@ -11,7 +11,7 @@ model = tf.keras.models.load_model("uav_multiclass_model.h5")
 import joblib
 le = joblib.load("label_encoder.pkl") if os.path.exists("label_encoder.pkl") else None
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_encoder():
     return joblib.load("label_encoder.pkl")
 
