@@ -121,6 +121,9 @@ model.fit(
     batch_size=16,
     class_weight=class_weights_dict
 )
+from collections import Counter
+print("Train label distribution:", Counter(y_train))
+
 
 # 6️⃣ Evaluate and Save
 model.save("uav_multiclass_cnn_model.h5")
