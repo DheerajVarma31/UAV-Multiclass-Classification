@@ -9,7 +9,7 @@ import joblib
 import os
 
 # Paths
-MODEL_PATH = "uav_multiclass_model.h5"
+MODEL_PATH = "uav_multiclass_cnn_model.h5"
 ENCODER_PATH = "label_encoder.pkl"
 
 # Load model and label encoder
