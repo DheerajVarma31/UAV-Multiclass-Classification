@@ -60,7 +60,7 @@ if uploaded_file:
         pred_class = np.argmax(pred)
         class_label = le.inverse_transform([pred_class])[0]
         confidence = np.max(pred)
-        if class_label in ["bebop_1", "membo_1"]:
+        if class_label in ["bebop_1", "mambo_1"]:
           st.success(f"🛩️ Predicted: **UAV** ({class_label})")
         else:
           st.warning(f"🔊 Predicted: **Non-UAV** ({class_label})")
