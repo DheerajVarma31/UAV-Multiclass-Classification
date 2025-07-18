@@ -121,9 +121,11 @@ model.fit(
     batch_size=16,
     class_weight=class_weights_dict
 )
-from collections import Counter
-print("Train label distribution:", Counter(y_train))
+from sklearn.preprocessing import LabelEncoder
 
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+print("Encoded classes:", le.classes_)
 
 # 6️⃣ Evaluate and Save
 model.save("uav_multiclass_cnn_model.h5")
