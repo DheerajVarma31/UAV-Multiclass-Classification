@@ -1,54 +1,68 @@
-import streamlit as st
-import numpy as np
-import librosa, librosa.display
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-import tensorflow as tf
 import os
-
-# Load model & label encoder
-model = tf.keras.models.load_model("uav_multiclass_model.h5")
+import numpy as np
+import streamlit as st
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+import tensorflow as tf
 import joblib
-le = joblib.load("label_encoder.pkl") if os.path.exists("label_encoder.pkl") else None
+from PIL import Image
+from io import BytesIO
 
+# Load model and encoder with cache
 @st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("uav_multiclass_cnn_model.h5")
+
+@st.cache_data
 def load_encoder():
     return joblib.load("label_encoder.pkl")
 
+model = load_model()
 le = load_encoder()
 
-def preprocess_audio(fp, sr=16000):
-    y, _ = librosa.load(fp, sr=sr)
+# Extract spectrogram image
+def extract_spectrogram(file_path):
+    y, sr = librosa.load(file_path, sr=16000)
     y = librosa.util.normalize(y)
-    y, _ = librosa.effects.trim(y, top_db=20)
-    return y, sr
+    y_trimmed, _ = librosa.effects.trim(y, top_db=20)
+    S = librosa.feature.melspectrogram(y=y_trimmed, sr=sr)
+    S_dB = librosa.power_to_db(S, ref=np.max)
 
-def extract_spec(y, sr):
-    S = librosa.feature.melspectrogram(y=y, sr=sr)
-    S = librosa.power_to_db(S, ref=np.max)
-    fig = plt.figure(figsize=(2.27,2.27), dpi=100)
-    canvas = FigureCanvas(fig); ax = fig.add_subplot(111)
-    librosa.display.specshow(S, sr=sr, ax=ax)
-    ax.axis('off'); canvas.draw()
-    img = np.frombuffer(canvas.buffer_rgba(), dtype=np.uint8)
-    w,h = fig.canvas.get_width_height()
+    fig = plt.figure(figsize=(2.27, 2.27), dpi=100)
+    ax = fig.add_subplot(111)
+    librosa.display.specshow(S_dB, sr=sr, ax=ax)
+    ax.axis('off')
+    
+    buf = BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
+    image = Image.open(buf).convert("RGB")
     plt.close(fig)
-    img = img.reshape((h,w,4))[:,:,:3] / 255.0
-    return img
 
-st.title("🛸 UAV Sound Classifier — Multi‑Class")
-st.write("Upload a `.wav` to classify.")
+    return np.array(image.resize((227, 227))) / 255.0
 
-file = st.file_uploader("Audio file", type=["wav"])
-if file:
-    y, sr = preprocess_audio(file)
-    img = extract_spec(y, sr)
-    img_batch = np.expand_dims(img, axis=0)
-    pred = model.predict(img_batch)[0]
-    idx = np.argmax(pred)
-    label = le.inverse_transform([idx])[0] if le is not None else idx
-    conf = pred[idx]
+# UI
+st.title("🚁 UAV Multiclass Sound Classification")
 
-    st.success(f"**{label}** — Confidence: {conf*100:.1f}%")
-    st.image(img, caption="Spectrogram", use_column_width=True)
-    st.write({cls: round(float(p)*100,1) for cls,p in zip(le.classes_,pred)})
+uploaded_file = st.file_uploader("Upload a WAV file", type=["wav"])
+
+if uploaded_file:
+    st.audio(uploaded_file, format="audio/wav")
+    
+    try:
+        st.write("📈 Extracting features...")
+        img = extract_spectrogram(uploaded_file)
+        img = np.expand_dims(img, axis=0)  # Add batch dimension
+
+        st.write("🧠 Predicting...")
+        pred = model.predict(img)
+        pred_class = np.argmax(pred)
+        class_label = le.inverse_transform([pred_class])[0]
+        confidence = np.max(pred)
+
+        st.success(f"🎯 Predicted Class: **{class_label}**")
+        st.info(f"Confidence: {confidence:.2f}")
+
+    except Exception as e:
+        st.error(f"⚠️ Error processing file: {e}")
