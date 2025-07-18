@@ -10,7 +10,8 @@ from keras import layers, models, callbacks
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 # Paths to your multiclass folders
-DATA_DIR = "C:\Users\dheer\UAV-Multiclass-Classification\dataset\Multiclass_Drone_Audio"  # Adjust if needed
+DATA_DIR = r"C:\Users\dheer\UAV-Multiclass-Classification\dataset\Multiclass_Drone_Audio"
+  # Adjust if needed
 
 def preprocess_audio(fp, sr=16000):
     y, _ = librosa.load(fp, sr=sr)
