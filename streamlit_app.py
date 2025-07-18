@@ -10,7 +10,7 @@ from PIL import Image
 import io
 
 # Load trained model and label encoder
-MODEL_PATH = "uav_multiclass_model.h5"
+MODEL_PATH = "uav_multiclass_cnn_model.h5"
 ENCODER_PATH = "label_encoder.pkl"
 
 model = load_model(MODEL_PATH)
